@@ -1,0 +1,233 @@
+---
+title: "homework chapter 19 - 20"
+author: "xiang liu"
+date: "April 1st, 2015"
+output:
+  html_document:
+    fig_height: 4
+    fig_width: 8
+    toc: yes
+  pdf_document:
+    fig_height: 4.3
+    fig_width: 8
+    keep_tex: yes
+    toc: yes
+geometry: margin=1in
+setspace: onehalfspacing
+fontsize: 12pt
+---
+
+
+**Based on KNNL Problems 19.16 & 19.17 on Page 868-869**. Disk drive service.The staff of a service center for electronic equipment includes three technicians who specialize in repairing three widely used makes of disk drives for desktop computers. It was desired to study the effects of technician (factor A) and make of disk drive (factor B) on the service time. Data was collected on the number of minutes required to complete the repair job in a study where each technician was randomly assigned to five jobs on each make of the disk drive. The data are in file “CH19PR16.txt”. Earlier in HW6, a two-way ANOVA model with interactions was used to fit the data. The same model is used for this problem
+
+\hfill
+
+**(a)**  The nature of the interaction effects is to be studied by making, for each years-of experience group, the pairwise comparison among the type of experience in order to identify, if possible, the type of experience that has the lowest mean prediction errors. Specifically, the following comparisons are to be estimated: D1 = $\mu_{11}-\mu_{21}$; D2 = $\mu_{12}-\mu_{22}$; D3 = $\mu_{13}-\mu_{23}$. The family confidence coefficient is to be 95%. Use Bonferroni procedure to make all required pairwise comparisons. Summarize your finding.
+
+```{r, echo=T,message=FALSE,comment=NA, warning=FALSE}
+library(pander)
+library(doBy)
+panderOptions('round', 2)
+panderOptions('keep.trailing.zeros', TRUE)
+
+###SETTING OVER
+data.19=read.table("CH19PR16.txt",col.names=c('Y','A','B','i'))
+names(data.19)=c("time","technician","make",'id')
+data.19$technician = factor(data.19$technician)
+data.19$make = factor(data.19$make)
+
+###ENTER RELEVANT VALUES FOR THE DATA
+data.groupMean=tapply(data.19$time, INDEX=list(data.19$technician, data.19$make), FUN=mean)
+data.groupMean=cbind(data.groupMean,rowMeans(data.groupMean))
+data.groupMean=rbind(data.groupMean,colMeans(data.groupMean))
+names(dimnames(data.groupMean)) = list("", "Cell Mean Table")
+rownames(data.groupMean)= c('technician.1','technician.2',
+                            'technician.3','mean(technician)')
+colnames(data.groupMean)= c('make.1','make.2','make.3',
+                            'mean(make)')
+print(data.groupMean,digits=4)
+n.i = matrix(rep(5,9),3,3)
+n.t = sum(n.i)
+g = 3
+model = lm(time ~ technician * make, data.19)
+MSE = anova(model)$M[4]
+
+###FIRST CALCULATE BONFERONNI STATISTIC
+B = qt(1 - .05/(2 * g), df = 39)
+
+###NEXT FIND THE STD ERROR
+#GROUPS 11 AND 21
+std.error.1 = sqrt(MSE/5+MSE/5)
+                    
+#GROUPS 12 AND 22
+std.error.2 = sqrt(MSE/n.i[1,2]+MSE/n.i[2,2])
+
+#GROUPS 13 AND 23
+std.error.3 = sqrt(MSE/5+MSE/5)
+
+###NEXT CALCULATE POINT ESTIMATES
+#GROUPS 11 AND 21
+point.est.1 = data.groupMean[1,1] - data.groupMean[1,2]
+#GROUPS 12 AND 22
+point.est.2 = data.groupMean[2,1] - data.groupMean[2,2]
+#GROUPS 13 AND 23
+point.est.3 = data.groupMean[3,1] - data.groupMean[3,2]
+
+###FINALLY CONSTRUCT CONFIDENCE INTERVALS
+#GROUPS 11 AND 21
+interval.1 = c(point.est.1 - B * std.error.1, 
+               point.est.1 + B * std.error.1)
+#GROUPS 12 AND 22
+interval.2 = c(point.est.2 - B * std.error.2, 
+               point.est.2 + B * std.error.2)
+#GROUPS 13 AND 23
+interval.3 = c(point.est.3 - B * std.error.3, 
+               point.est.3 + B * std.error.3)
+```
+
+`Solution`: __The MSE is 52.01 from ANOVA table. Bonferonni statistics is 2.5.__
+
+* For technician 1, the average difference of repairing time when working on made 1 vs made 2, namely D1 = $\mu_{11}-\mu_{21}$, is estimated to be within (-31.3, 54.1).
+* For technician 2, the average difference of repairing time when working on made 1 vs made 2, namely D2 = $\mu_{12}-\mu_{22}$ is estimated to be within (-56.1, 29.3).
+* For technician 3, the average difference of repairing time when working on made 1 vs made 2, namely D3 = $\mu_{13}-\mu_{23}$ is estimated to be within (-40.5,44.9).
+
+\hfill
+
+**(b)**  Perform a test whether the average service time of technician 1 & 2 is different from the third technician. Write the hypotheses of the test and draw conclusion.
+
+```{r, echo=T,message=FALSE,comment=NA, warning=FALSE}
+cont = c(1/2, 1/2, -1) 
+means = with(data.19, tapply(time, technician, mean))
+lengths = with(data.19, tapply(time, technician, length))
+D = sum(cont * means) 
+n = with(data.19, tapply(time, technician, length))
+se = sqrt(MSE * sum(cont^2 / lengths))
+t = qt(1 - .05/2, df = 39)
+interval = c(D - t * se, D + t * se)
+p.value = pt(D/se, df = 39)*2
+pander(cbind('Difference' =round(D,2), 'Test Statistics' = round(D/se,2), 
+             'df' = 39, 'P-value' = round(p.value,2),
+             '2.5%' = interval[1], '97.5%'=interval[2]))
+```
+
+* Hypothesis: $H_0$: $\frac{\mu_{1.}+\mu_{2.}}{2}$ = $\mu_{3.}$ vs $H_a$: $\frac{\mu_{1.}+\mu_{2.}}{2} \neq \mu_{3.}$
+* Decision rule: Statistics test show that t = -0.68, p > 0.05. Therefore, we reject the null hypothesis.
+* Conclusion: We don't have enough evidence to prove the average service time of technician 1 & 2 is different from the third technician.
+
+\hfill
+
+**(c)**  Fit the ANOVA model using regression approach in SAS. Write down the regression model and show how to obtain all the estimators of the regression model by matrix approach (only write the X matrix and parameter vector).
+
+* $Y = \beta_0 + \beta_1 X_1 + \beta_2 X_2 + \beta_3 X_3 + \beta_4 X_4 + \beta_{13} X_{13} + \beta_{14} X_{14} + \beta_{23} X_{23} + \beta_{24} X_{24} + \epsilon$
+
+* $\beta = (X^\prime X)^{-1} X^\prime Y$
+
+* Where $\beta = \begin{bmatrix}
+\beta_0\\ 
+\beta_1\\ 
+\beta_2\\ 
+\beta_3\\ 
+\beta_4\\ 
+\beta_{13}\\ 
+\beta_{14}\\ 
+\beta_{23}\\
+\beta_{24}\\
+\end{bmatrix}$ 
+
+* and $X = \begin{bmatrix}
+1 & X_{1,1} & X_{1,2} & X_{1,3} & X_{1,4} & X_{1,13} & X_{1,14} & X_{1,23} & X_{1,24}\\ 
+1 & X_{2,1} & X_{2,2} & X_{2,3} & X_{2,4} & X_{2,13} & X_{2,14} & X_{2,23} & X_{2,24}\\ 
+\vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots  \\
+1 & X_{45,1} & X_{45,2} & X_{45,3} & X_{45,4} & X_{45,13} & X_{45,14} & X_{45,23} & X_{45,24}\\ 
+\end{bmatrix}$
+
+\hfill
+
+**(d)**  Check the output for regression approach. Perform the same test as in Part (b).  Do you obtain the same results?  Also, test whether or not the two factors interact and present the results including hypothesis, test statistics, and P-value.
+
+```{r, echo=T,message=FALSE,comment=NA, warning=FALSE}
+X1 = c(rep(c(1,0,-1),each=15))
+X2 = c(rep(c(0,1,-1),each=15))
+X3 = c(rep(c(1,0,-1),each=5,times=3))
+X4 = c(rep(c(0,1,-1),each=5,times=3))
+X13 = X1 * X3; X14 = X1 * X4; X23 = X2 * X3; X24 = X2 * X4
+# ANOTHER WAY TO RECODE DUMMY VARIABLES
+# A = factor(data.19$technician)
+# x1 = ifelse(A==1,1,0) - ifelse(A==3,1,0)    
+# x2 = ifelse(A==2,1,0) - ifelse(A==3,1,0)  
+data = cbind(data.19, X1, X2, X3, X4, X13, X14, X23, X24)
+
+# Note the estimates for the regression parameters are:     
+# 55.82 (estimate of mu_dot), -0.49 (estimate of alpha_1) 
+# -0.56 (estimate of alpha_2), thus alpha_3 is estimated 0.49+0.56 = 1.05
+# 55.82 (estimate of mu_dot), 0.31 (estimate of beta_1) 
+# 0.78 (estimate of beta_2), thus alpha_3 is estimated -1.09   
+
+# Estimates of the Factor Level Means:                  
+# For Design technician 1 the cell mean mu_1 : 55.82 - 0.49 = 55.33.                  
+# For Design technician 2 the cell mean mu_2 : 55.82 - 0.56 = 55.27.  
+# For Design technician 3 the cell mean mu_3 : 55.82 + 1.05 = 56.87.                  
+# For Design make 1 the cell mean mu_2 : 55.82 + 0.31 = 56.13. 
+# For Design make 2 the cell mean mu_1 : 55.82 + 0.78 = 56.6.                  
+# For Design make 3 the cell mean mu_2 : 55.82 - 1.09 = 54.73.
+
+# Test Beta_1 + Beta_2 = 0
+D = 3/2*(-0.49 + (-0.56))
+se = sqrt(MSE * sum(c(3/2,-3/2)^2 / 15)) 
+p.value = pt(D/se, df = 39)*2
+pander(cbind('Difference' =round(D,2), 'Test Statistics' = round(D/se,2), 
+             'df' = 39, 'P-value' = round(p.value,2)))
+```
+
+* From the class note we have, $\mu_{1.} = \beta_0 + \beta_1$ and $\mu_{2.} = \beta_0 + \beta_2$ and $\mu_{3.} = \beta_0 - \beta_1 - \beta_2$, the hypothesis can be framed as whether $\frac {3}{2} (\beta_1+\beta_2)$ = 0?
+* Hypothesis Testing: $H_0$: $\frac {3}{2} (\beta_1+\beta_2) = 0$ vs $H_a$: $\frac {3}{2} (\beta_1+\beta_2) \neq 0$
+* Decision Rule: The T-test statistics shows it's not significant, p-value > 0.05.
+* Conclusion: we don't have sufficient evidence to conclude the average service time of technician 1 & 2 is different from the third technician. __AND NOTED the t-test statistics value = 2.02 is the same as what we get in part (b)__. 
+
+```{r, echo=T,message=FALSE,comment=NA, warning=FALSE}
+pander(coef(summary(lm(time ~ X1 + X2 + X3+ X4 + X13 + X14 + X23 + X24, data))))
+```
+
+* Hypothesis Testing: $H_0$: $\beta_{13} = \beta_{14} = \beta_{23} = \beta_{24} = 0$ vs $H_a$: $not all of them equal zero$
+* Decision rule: Statistics test shows that $\beta_{14}, \beta_{23}, \beta_{24}$ are significant, therefore we reject the null hypothesis. 
+* Conclusion: We have enough evidence to conclude that there is a significant interation between technician and make in predicting times. 
+
+\hfill
+
+**2**. Consider a two-way ANOVA with Factor A and B having two levels. Using SSA, SSB, SSAB, and SSE to denote the sum of squares, make up a data set where
+
+\hfill
+
+**(a)** $SS_A=SS_B=SS_{AB}=0$,$SS_E=2$ 
+
+\hfill
+
+<img src="http://latex.codecogs.com/gif.latex?Table:&space;\begin{tabular}{&space;|c|c|c|&space;}&space;\hline&space;&{B1}&{B2}\\&space;\hline&space;A1&1/2&1/2&space;\\&space;&-1/2&-1/2\\&space;\hline&space;A2&1/2&1/2&space;\\&space;&-1/2&-1/2\\&space;\hline&space;\end{tabular}" title="Table: \begin{tabular}{ |c|c|c| } \hline &{B1}&{B2}\\ \hline A1&1/2&1/2 \\ &-1/2&-1/2\\ \hline A2&1/2&1/2 \\ &-1/2&-1/2\\ \hline \end{tabular}" />
+
+* $\mu_{A1}$ = $\mu_{A2}$ = $\mu_{B1}$ = $\mu_{B2}$ = 0
+
+\hfill
+
+**(b)** $SS_A$ > 0,$SS_B$ > 0,$SS_{AB}$ = $SS_E$ = 0 
+
+\hfill
+
+<img src="http://latex.codecogs.com/gif.latex?Table:&space;\begin{tabular}{|c|c|c|}&space;\hline&space;&{B1}&{B2}\\&space;\hline&space;A1&0&2&space;\\&space;&0&2\\&space;\hline&space;A1&2&4&space;\\&space;&2&4\\&space;\hline&space;\end{tabular}" title="Table: \begin{tabular}{|c|c|c|} \hline &{B1}&{B2}\\ \hline A1&0&2 \\ &0&2\\ \hline A1&2&4 \\ &2&4\\ \hline \end{tabular}" />
+
+
+* $\bar Y_{1.}$ = 1; $\bar Y_{2.}$ = 3; $\bar Y_{.1}$ = 1; $\bar Y_{.2}$ = 3; $\bar Y_{..}$ = 2
+* $SS_A$ = $SS_B$ = 8 and $SS_{AB}$ = $SS_E$ = 0 
+
+\hfill
+
+**(c)** $SS_A$ > 0,$SS_B$ = 0,$SS_{AB}$ > 0, $SS_E$ = 0 
+
+\hfill
+
+<img src="http://latex.codecogs.com/gif.latex?Table:&space;\begin{tabular}{|l|l|l|}&space;\hline&space;&{B1}&{B2}\\&space;\hline&space;A1&0&2&space;\\&space;&0&2\\&space;\hline&space;A1&4&2&space;\\&space;&4&2\\&space;\hline&space;\end{tabular}" title="Table: \begin{tabular}{|l|l|l|} \hline &{B1}&{B2}\\ \hline A1&0&2 \\ &0&2\\ \hline A1&4&2 \\ &4&2\\ \hline \end{tabular}" />
+
+* $\bar Y_{1.}$ = 1; $\bar Y_{2.}$ = 3; $\bar Y_{.1}$ = 2; $\bar Y_{.2}$ = 2; $\bar Y_{..}$ = 2
+* $SS_A$ = 8 and $SS_B$ = 0; $SS_T$ = 16 and $SS_E$ = 0
+* $SS_{AB}$ = $SS_T - SS_A - SS_B - SS_E$ = 8
+
+

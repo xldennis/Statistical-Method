@@ -1,0 +1,71 @@
+---
+title: "homework chapter 25"
+author: "xiang liu"
+date: "April 31st, 2015"
+output:
+  html_document:
+    fig_height: 4
+    fig_width: 8
+    toc: yes
+  pdf_document:
+    fig_height: 4.3
+    fig_width: 8
+    keep_tex: yes
+    toc: yes
+geometry: margin=1in
+setspace: onehalfspacing
+fontsize: 12pt
+---
+
+
+**25.9(a)**
+
+\hfill
+
+```{r, echo=T,message=FALSE,comment=NA, warning=FALSE}
+library(pander)
+library(doBy)
+data=read.table("CH25PR09.txt",header=FALSE, 
+                col.names = c('characteristics', 'machine', 'coil'))
+attach(data)
+machine <- factor(machine)
+fit <- lm(characteristics ~ machine)
+pander(anova(fit))
+```
+
+* Ho: $\sigma^2_\mu$ = 0 vs. Ha: $\sigma^2_\mu > 0$
+* Decision Rule: since the test statistics F(3,36) = 28.1, p < 0.1, we reject the Ho.
+* Conclusion: there is sufficient evidence to suggest all machinese in the plant produced different mean coil characteristic.
+
+\hfill
+
+**25.10(d)**
+
+* $\hat \sigma^2_\mu$ = (MSTR - MSE)/n = (200.8-7.15)/10 = 19.37
+
+\hfill
+
+**25.15(a)** 
+
+```{r, echo=T,message=FALSE,comment=NA, warning=FALSE}
+data=read.table("CH25PR15.txt",header=FALSE, 
+                col.names = c('MPG', 'driver', 'car','n'))
+attach(data)
+driver <- factor(driver)
+car <- factor(car)
+fit <- lm(MPG ~ driver + car + driver:car)
+pander(anova(fit))
+```
+
+* Ho: $\sigma^2_{\alpha \beta}$ = 0 vs. Ha: $\sigma^2_{\alpha \beta} > 0$
+* Decision Rule: since the test statistics F(12,20) = 2.45, p = 0.3715 > 0.05, we cannot reject the Ho.
+* Conclusion: there is insufficient evidence to suggest an interaction effect between divers and cars on MPG. 
+
+\hfill
+
+**25.15(c)** 
+
+* MSA = 93.43, MSB = 23.68, MSAB = 0.2049, n = 2, a = 4, b = 5
+* $\hat \sigma^2_a$ = (MSA - MSAB)/bn = 9.3225
+* $\hat \sigma^2_b$ = (MSB - MSAB)/an = 2.9344
+* Factor A, driver, seem to have a greater effect on MPG.

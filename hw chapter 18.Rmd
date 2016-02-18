@@ -1,0 +1,95 @@
+---
+title: "homework chapter 18"
+author: "xiang liu"
+date: "March 1st, 2015"
+output:
+  html_document:
+    fig_height: 4
+    fig_width: 8
+    toc: yes
+  pdf_document:
+    fig_height: 4.3
+    fig_width: 8
+    keep_tex: yes
+    toc: yes
+geometry: margin=1in
+setspace: onehalfspacing
+fontsize: 22pt
+---
+
+
+**Filling machines**. A company uses six filling machines of the same make and model to place detergent into cartons that show a label weight of 32 ounces. The production manager has complained that the six machines do not place the same amount of fill into the cartons. A consultant requested that 20 filled cartons be randomly selected from each of the 6 machines and the content of each carton be carefully weighed. The deviations from 32 ounces were recorded. Sample data are stored in the data file “CH16PR11.txt” with variable names $y$, $i$, and $j$, respectively.
+
+Assume that ANOVA model $Y_{ij} = \mu_i + \epsilon_{ij}$ is applicable. In HW3, the model was fitted.
+
+\hfill
+
+**(a)** Obtain a 95% confidence interval for *D* = $\mu_2 - \mu_1$. Interpret your interval estimate.
+```{r, echo=T,message=FALSE,comment=NA, warning=FALSE}
+library(pander)
+library(doBy)
+data.18=read.table("CH16PR11.txt",col.names=c('y','i','j'))
+names(data.18)=c("amount","machine","replication")
+#### statistics table
+ft = summaryBy(amount~machine, data.18, FUN=c(length, mean, sd))
+attributes(ft)$names <- c("models","sample size",'mean','standard deviation')
+pander(ft)
+#### the confidence interval
+x = subset(data.18,machine==2,amount) - subset(data.18,machine==1,amount)
+x = as.matrix(x)
+n = length(x)
+error = round(qt(0.975,df=n-1)*sd(x)/sqrt(n),3)
+left  = mean(x)-error
+right = mean(x)+error
+print(paste("The 95% confidence interval is between", left, " and ", right))
+## machine is the factor in this experiment and has to be declared as such in R
+label=c("machine","replication")
+data.18[label]<-lapply(data.18[label],factor)
+```
+
+`Interpret`: __The detergent placed into carton by the 2nd model is expected to be between  -0.015  and  0.249 higher than it's placed by the 1st model. Since 0 is included in 95% confidence interval, we don't have enough confidence to include significant differences between the first two models.__
+
+
+\hfill
+
+\hfill
+
+**(b)** Use the Tukey multiple comparison method to determine which pairs of machines differ significantly.
+
+```{r, echo=T,message=FALSE,comment=NA, warning=FALSE,fig.align='left'}
+cat("First we noted that there is difference among the 6 models overall")
+panderOptions('round', 3)
+data.aov=aov(amount ~ machine,data=data.18)
+pander(data.aov)
+mcTukey=TukeyHSD(data.aov,"machine")$machine
+pander(mcTukey)
+```
+
+`Interpret`: __Using Tukey comparison method, there is a significant differences between model 1 and 3, model 1 and 4, model 2 and 3, model 2 and 4, model 3 and 5, model 3 and 6, model 4 and 5, and model 4 and 6.__
+
+\hfill
+
+\hfill
+
+**(c)** Machines 1 and 2 were bought new five years ago, machines 3 and 4 were bought in a reconditioned state five years ago, and machines 5 and 6 were bought new last year. Before doing the study, it was decided that the comparison of interest was to compare the average of the mean weight deviations for machines 1 and 2 with the average of the mean weight deviations for machines 3 and 4. Set up an appropriate contrast and estimate it with a 95% confidence interval.
+```{r, echo=T,message=FALSE,comment=NA, warning=FALSE,fig.align='left'}
+data.18$level=data.18$machine
+levels(data.18$level) <- list(A=c(1,2), B=c(3,4),C=c(5,6))
+attach(data.18)
+```
+
+\hfill
+
+`Interpret`: __Since it's a planned test, Bonferroni procedure is recommended. The Bonferroni adjusted p-value is 1.496721e-09. Therefore, we reject the null hypothesis and conclude that we have 95% confidence there is signifincant difference between the average of the mean weight deviations for model 1 and 2 and that for model 3 and 4.__
+
+\hfill
+
+\hfill
+
+**(d)** Perform a Levene’s test for constant variance assumption.
+```{r, echo=T,message=FALSE,comment=NA, warning=FALSE,fig.align='left'}
+library(car)
+pander(leveneTest(amount~machine, data=data.18))
+```
+
+`Interpret`: __Since the p-value is larger than .05, we cannot reject the null hypothesis of equal variance. __

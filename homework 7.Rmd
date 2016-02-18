@@ -1,0 +1,148 @@
+---
+title: "homework chapter 6 & 7"
+author: "xiang liu"
+date: "November 19, 2014"
+output:
+  html_document:
+    fig_height: 4
+    fig_width: 8
+    toc: yes
+  pdf_document:
+    fig_height: 4.3
+    fig_width: 8
+    keep_tex: yes
+    toc: yes
+geometry: margin=1in
+setspace: onehalfspacing
+fontsize: 12pt
+---
+
+####1 
+
+- first order model:$$Y_i=\beta_1 X_{i1}+\beta_2 X_{i2}+\beta_3 X_{i3}+\varepsilon_i$$
+ 
+- Commercial: $\mathbb E\{Y\}=(\beta_0+\beta_2)+\beta_1 X_1$ 
+- Mutual savings: $\mathbb E\{Y\}=(\beta_0+\beta_3)+\beta_1 X_1$ 
+- Savings and loan: $\mathbb E\{Y\}=(\beta_0-\beta_2-\beta_3)+\beta_1 X_1$
+
+- $\beta_2$ is how much more a commercial bank gain of the profit of last year compared to bank on average for any given size of bank (commercial vs. average of the total). 
+- $\beta_3$ is how much more a mutual savings bank gain of the profit of last year compared to bank on average for any given size of bank (mutual savings vs. average of the total). 
+- $-\beta_2 -\beta_3$ is how much more a savings and loan bank gain of the profit of last year compared to bank on average for any given size of bank (saving and loan vs. average of the toal).
+
+- first order model with interaction term:$$Y_i=\beta_1 X_{i1}+\beta_2 X_{i2}+\beta_3 X_{i3}+\beta_4 X_{i1} X_{i2}+\beta_5 X_{i1} X_{i3}+\varepsilon_i$$
+
+- Commercial: $\mathbb E\{Y\}=(\beta_0+\beta_2)+(\beta_1+\beta_4) X_1$ 
+- Mutual savings: $\mathbb E\{Y\}=(\beta_0+\beta_3)+(\beta_1+\beta_5) X_1$ 
+- Savings and loan: $\mathbb E\{Y\}=(\beta_0-\beta_2-\beta_3)+(\beta_1-\beta_4-\beta_5) X_1$
+
+####2
+```{r, echo=T,message=FALSE,comment=NA}
+data=read.table("CH08PR06.txt",col.names=c('Y','X'))
+data=transform(data, 
+  x1   = scale(X,T,F))
+data.lm=lm(Y~x1+I(x1^2),data=data)
+data.lm
+'R2'= sum(anova(data.lm)[1:2,2])/sum(anova(data.lm)[1:3,2]) # R square
+plot(Y~x1,data, main="polynomial plot for x and y",
+     xlab="centered age",
+     ylab="level of a steroid")
+curve(21.094+1.137*x- 0.118*x^2,add=T,col="red")
+```
+
+- (a) the fitted model is $$\hat Y = 21.094+1.137 X - 0.118 X^2$$
+- (b) the $R^2$ is 0.8143
+- (c) from the polynomial plot we see a good fit of line and dots. Plus we have a relatively high R square given only one variable included. Thus it seems to be a good fit.
+
+
+```{r, echo=T,message=FALSE,comment=NA}
+fit=sum(anova(data.lm)[1:2,2])/2/anova(data.lm)[3,3]
+alpha=0.01
+B=qt(1-alpha/2/3,nrow(data)-1-2)
+xbar=mean(data$X)
+xh=data.frame(x1=c(10,15,20))
+ci.B <- function(model, new, alpha = 0.01)
+{
+  df    <- nrow(model.frame(model)) - length(coef(model))  # 23
+  B     <- qt(1-alpha/2/nrow(new),nrow(model.frame(model))-1-2)                # 2.2580
+  ci    <- predict(model, new, se.fit = TRUE)   
+  x <- cbind(
+    'x'   = new,
+    's'   = ci$se.fit,
+    'fit' = ci$fit,
+    'lwr' = ci$fit - B * ci$se.fit,
+    'upr' = ci$fit + B * ci$se.fit)
+
+  return(x)
+}
+ci.B(data.lm,xh)
+# data.predict=predict.lm(data.lm, xh, int = "c", level = (1 - 0.01/nrow(new)), se.fit = TRUE)$fit
+```
+
+- (d) H0: $\beta_1 = \beta_{11} = 0$ 
+      Ha: not all $\beta_s$ = 0 (s = 1, 11).
+- Decision rule: MSR is 523.1, and MSE is 9.94 here. F* equals to 523.133/9.9392 = 52.63, F(.99; 2, 24) = 5.61. Here F > 5.61, we reject H0.
+- Conclusion: We have sufficient evidence to show there is a regression relation, particularly polynomial relationship in our model. 
+- p-value = 0
+- (e) As showed above, we have 99% confidence that the interval (14.455, 26.80) contains the actual mean level of a steroids at age of 10. And the interval (-3.367, 26.40) contains the actual mean level of a steroids at age of 15. And the interval (-31.218, 24.18) contains the actual mean level of a steroids at age of 20.
+
+```{r, echo=T,message=FALSE,comment=NA}
+ci.sim <- function(model, newdata,  alpha = 0.01)
+{
+  g  <- nrow(newdata)
+  CI <- predict(model, newdata, se.fit = TRUE)
+  M  <- qt(1 - alpha / (2*g), model$df)
+  spred <- sqrt( CI$residual.scale^2 + (CI$se.fit)^2 )  # (2.38) 
+  x <- data.frame(
+    "x"     = newdata,
+    "spred" = spred,
+    "fit"   = CI$fit,
+    "lower" = CI$fit - M * spred,
+    "upper" = CI$fit + M * spred)
+
+  return(x)
+}
+xh <- data.frame(x1 = 15)
+ci.sim(data.lm,xh)
+```
+
+- (f) As showed above, we have 99% confidence that the interval (-4.007, 27.04) contains the actual possible mean level of a steroids when collecting a new data at the age of 15.
+- (g) H0: $\beta_11 = 0$ 
+      Ha: not all $\beta_{11} \neq$ 0.
+- Decision rule: MSR is 253, and MSE is 23.9 here. F* equals to 253/23.9 = 25.4, F(.99; 1, 24) = 7.82. Here F > 7.82, we reject H0.
+- Conclusion: We have sufficient evidence to show that quadratic term plays a significant role in our proposed model.
+- p-value = 0.0000370783.
+
+```{r, echo=T,message=FALSE,comment=NA}
+data.lm2=lm(Y~X+I(X^2),data)
+data.lm2
+```
+
+(h) the fitted model is $$\hat Y = -26.325+4.874 X - 0.118 X^2$$ 
+
+```{r, echo=T,message=FALSE,comment=NA}
+res.lm2=data.lm2$residuals
+fit.lm2=data.lm2$fitted.values
+plot(fit.lm2,res.lm2)
+plot(data$X,res.lm2)
+lm2.stdres = rstandard(data.lm2)
+qqnorm(lm2.stdres,
+       ylab="Standardized Residuals",
+       xlab="Normal Scores",
+       main="residuals of the level of a steroid") 
+qqline(lm2.stdres)
+```
+
+- (i) it residuals is evenly distributted along x-axis=0 and equal variance among all fitted value as well as X. However it doesn't conform to a normal distribution.
+
+```{r, echo=T,message=FALSE,comment=NA}
+data.full=lm(Y~0+ as.factor(x1)+as.factor(I(x1^2)),data)
+anova(data.lm,data.full)
+```
+
+- (j)  H0: $\mathbb E\{Y\}=\beta_0+\beta_1 x +\beta_2 x^2$ 
+       Ha: $\mathbb E\{Y\} \neq \beta_0+\beta_1 x +\beta_2 x^2$. 
+- Decision rule: As showed above, the MSLF= (238-159) /12 = 6.583, the MSPE= 159/12 = 13.25, F* = 6.583/13.25 = 0.5,  F(.99; 12, 12) = 4.155. Here F < 4.155, we cannot reject H0.
+- Conclusion: We have insufficient evidence to conclude that the polynomial equation $\mathbb E\{Y\}=\beta_0+\beta_1 x +\beta_2 x^2$ is not appropriate.
+- p-value = 0.88
+
+

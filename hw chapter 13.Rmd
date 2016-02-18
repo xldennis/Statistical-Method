@@ -1,0 +1,129 @@
+---
+title: "homework chapter 13"
+author: "xiang liu"
+date: "February 4, 2015"
+output:
+  html_document:
+    fig_height: 4
+    fig_width: 8
+    toc: yes
+  pdf_document:
+    fig_height: 4.3
+    fig_width: 8
+    latex_engine: pdflatex
+    toc: yes
+geometry: margin=1in
+setspace: onehalfspacing
+fontsize: 22pt
+---
+
+
+**1**. For each of the following models, state whether it is a linear model, an intrinsically linear model, or a nonlinear model. In the case of an intrinsically linear model, indicate how it can be transformed to a linear model by describing a suitable transformation. In each case, $\epsilon_i$ denotes a random error. 
+
+
+a> $y_i = e^{(\beta_0+\beta_1 x_i) \epsilon_i}$
+
+<br>`ANSWER`: It can be transformed into a linear model: $log(y_i) = \beta_0+\beta_1 x_i + log(\epsilon_i)$. Therefore, It's intrinsically linear.
+
+b> $y_i = \beta_0+ \beta_1 x_{1i}+ \beta_2 x_{2i} +\epsilon_i$
+
+<br>`ANSWER`: It is linear model
+
+c> $y_i = [1 + e^{(\beta_0+\beta_1 x_{1i}+\beta_2 x_{2i}+\epsilon_i)}]^{-1}$
+
+<br>`ANSWER`: It can be transformed into a linear model: $log(y_i^{-1}-1) = \beta_0+\beta_1 x_{1i}+\beta_2 x_{2i} + \epsilon_i)$. Therefore, It's intrinsically linear.
+
+d> $y_i = e^{(\beta_0+ log(\beta_1 x_{1i}))} + \epsilon_i$
+
+<br>`ANSWER`: It cannot be transformed into any linear model. Therefore, It's nonlinear.
+
+e> $y_i = \beta_0 x_{1i}^{\beta_1} x_{2i}^{\beta_2} + \epsilon_i^{\beta3}$
+
+<br>`ANSWER`: Since $\epsilon_i$ is the residual here, we can transform the 
+nonlinear model into linear form: $log(yi) = log(\beta_0)+\beta_1 log(x_{1i})+\beta_2 log(x_{2i}) + \theta_i$ where $\theta_i$ is the transformed residual (we don't care about what number of $\beta_3$ is). Therefore, it's a intrinsically linear model.
+
+e> $y_i = \beta_0 + \beta_1 x_{1i} + \beta_2 x_{2i}^{\beta_3} + \epsilon_i$
+
+<br>`ANSWER`: It cannot be transformed into any linear model. Therefore, It's nonlinear.
+
+
+**2**. KNNL Problems 13.10-13.12 on Page 550. In an enzyme kinetics study, the velocity of a reaction (Y) is expected to be related to the concentration (X) of a substance as follows:
+$$y_i={\frac{\gamma_0 x_i}{\gamma_1+x_i}+\epsilon_i}$$
+Eighteen concentrations have been studied and the results are stored in the file CH13PR10.txt.
+
+
+a> To obtain starting values, observe when the additive error is ignored we have
+$$y_i^{-1}\approx\frac{1}{\gamma_0}+\frac{\gamma_1}{\gamma_0} x_i^{-1}$$
+Use least squares regression analysis to obtain estimates of $\gamma_0^{-1}$ and $\frac{\gamma_1}{\gamma_0}$, and list your starting values for $\gamma_0$ and $\gamma_1$.
+
+`ANSWER`
+```{r, echo=T,message=FALSE,comment=NA}
+data.10=read.table("CH13PR10.txt",col.names=c('y','x'))
+yp=1/data.10$y; xp=1/data.10$x
+lm.coef=lm(yp~xp)$coef
+sprintf("inverse of r0 is %.4f", lm.coef[[1]])
+sprintf("r1/r0 is %.4f", lm.coef[[2]])
+sprintf("r0 is %.4f", 1/lm.coef[[1]])
+sprintf("r1 is %.4f", lm.coef[[2]]/lm.coef[[1]])
+```
+
+b> Using the starting values from part (a), find the least squares estimates of $\gamma_0$ and $\gamma_1$ in the non-linear model.
+
+`ANSWER`: $\gamma_0$ is 28.137 and $\gamma_1$ is 12.574
+```{r, echo=T,message=FALSE,comment=NA}
+gamma_0=1/lm.coef[[1]]
+gamma_1=lm.coef[[2]]/lm.coef[[1]]
+nlm.10 <- nls(data=data.10, y ~ gamma_0*x/(gamma_1+x),
+              start = list(gamma_0=gamma_0, gamma_1 = gamma_1))
+summary(nlm.10)[11]
+```
+
+c> Plot the estimated nonlinear regression function and the observed data. Does the model appear to be adequate?
+
+```{r, echo=T,message=FALSE,comment=NA}
+plot(y ~ x, data.10, pch = 19,xlab = 'concentration',ylab='velocity of reaction', 
+     main='Enzyme Kinetics')
+curve(gamma_0*x/(gamma_1+x), from = 0, to = 40, col='green',add=T)
+```
+
+`ANSWER`: The data fit the model quite well.
+
+d> Plot the residuals against the concentration(x). What does this plot suggest?
+
+```{r, echo=T,message=FALSE,comment=NA}
+plot(resid(nlm.10) ~ x, data.10, pch = 19,xlab = 'concentration',ylab='residual',
+     main='Enzyme Kinetics')
+```
+
+`ANSWER`: It is evenly distributed among residual = 10 regardless of how much the concentration is.
+
+d> Create a normal probability plot for the residuals. What does this plot suggest?
+
+```{r, echo=T,message=FALSE,comment=NA}
+qqnorm(resid(nlm.10), 
+       xlab = "Normal Scores", 
+       ylab = "Standardized Residuals", 
+       main = "Normal Probability Plot")
+qqline(resid(nlm.10),col='green')
+```
+
+`ANSWER`: The residuals roughly conforms to a normal distribution but with certain variation.
+
+f> Construct approximate 95% confidence intervals for $\gamma_0$ and $\gamma_1$.
+```{r, echo=T,message=FALSE,comment=NA}
+lower.0=coef(summary(nlm.10))[1,1]-qnorm(1-0.05/2)*
+  coef(summary(nlm.10))[1,2]
+upper.0=coef(summary(nlm.10))[1,1]+qnorm(1-0.05/2)*
+  coef(summary(nlm.10))[1,2]
+lower.1=coef(summary(nlm.10))[2,1]-qnorm(1-0.05/2)*
+  coef(summary(nlm.10))[2,2]
+upper.1=coef(summary(nlm.10))[2,1]+qnorm(1-0.05/2)*
+  coef(summary(nlm.10))[2,2]
+sprintf("the interval of r0 is between %.4f and %.4f", lower.0,upper.0)
+sprintf("the interval of r1 is between %.4f and %.4f", lower.1,upper.1)
+```
+
+e> Estimate the expected velocity of the reaction when the concentration (X) is 32.
+```{r, echo=T,message=FALSE,comment=NA}
+sprintf("the expected velocity of reaction when concentration is 32 is expected to be %.4f", predict(nlm.10,list(x=32)))
+```

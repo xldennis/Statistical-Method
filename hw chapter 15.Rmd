@@ -1,0 +1,173 @@
+---
+title: "homework chapter 14"
+author: "xiang liu"
+date: "February 8, 2015"
+output:
+  pdf_document:
+    fig_height: 4.3
+    fig_width: 8
+    keep_tex: yes
+    toc: yes
+  html_document:
+    fig_height: 4
+    fig_width: 8
+    toc: yes
+geometry: margin=1in
+setspace: onehalfspacing
+fontsize: 22pt
+---
+
+**1**.KNNL Problem 14.7 on Page 625. **Annual dues**. The board of directors of a professional association conducted a random sample survey of 30 members to assess the effects of several possible amounts of dues increase. The sample results follow and are in CH14PR07.txt. X denotes the dollar increase in annual dues and Y = 1 if the individual surveyed indicated that the membership will not be renewed at that amount of dues increase and 0 if the membership will be renewed.
+
+| $i$:      |1    |2    |3    |...  |28   |29   |30   |
+| --------- |:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| $X_i$:    |30   |30   |30   |...  |49   |50   |50   |
+| $Y_i$:    |0    |1    |0    |...  |0    |1    |1    |
+
+Logistic regression model (14.20) is assumed to be appropriate.
+
+
+a> Fit the model to this data. Find the estimated $\beta_0$ and $\beta_1$. State the fitted response function
+
+```{r, echo=T,message=FALSE,comment=NA}
+data.17=read.table("CH14PR07.txt",col.names=c('y','x'))
+logit.17 <- glm(y ~ x, family = binomial(link = "logit"), data.17)
+summary(logit.17)[12]
+```
+`ANSWER`: Therefore, the fitted response function is: $$\hat \pi_i = \frac{e^{\beta_0+\beta_1 x_i}}{1+e^{\beta_0+\beta_1 x_i}}$$
+By plugging in $\beta_0$ = -4.81 and $\beta_1$ = 0.125, we get the response function: $$\hat \pi_i = \frac{e^{0.125 x_i - 4.81}}{1+e^{0.125 x_i - 4.81}}$$
+
+\hfill
+
+b> Obtain a scatter plot of the data with the fitted logistic response function from part (a)
+
+```{r, echo=T,message=FALSE,comment=NA}
+# Plot Logistic Regression
+xx <- with(data.17, seq(min(x), max(x), len = 200))
+plot(y ~ x, data.17, pch = 19, col = "gray40", 
+     xlab = "The dollar increase in annual dues", ylab = "Fitted Value")
+lines(xx, predict(logit.17, data.frame(x = xx), type = "resp"), lwd = 2, col='blue')
+a= coef(logit.17)[1]
+b= coef(logit.17)[2]
+curve(exp(a+b*x)/(1+exp(a+b*x)), from = min(data.17$x), to = max(data.17$x), 
+      col='green',add=T)
+title("Scatter Plot with Logistic Mean Response Functions")
+```
+
+\hfill
+
+c> Obtain exp(b1) and interpret it.
+
+`ANSWER`: The $e^{\beta_1}$ is 1.133237, which means for every one dollar increase in the annual dues, the odds ratio of getting membership unrenewed (Y=1) versus renewed (Y=0) increase by 1.133237 times. 
+
+\hfill
+
+d> What is the estimated probability that association members will not renew their memeberhip if the dues are increased by $40?
+
+```{r, echo=T,message=FALSE,comment=NA}
+cat("the estimated probability that association members will not renew
+    their memeberhip if \n the dues are increased by $40 is", 
+    predict(logit.17, type = "response",newdata = list(x=40)))
+```
+
+e> Estimate the amount of dues increase for which 75% of the members are expected not to renew their association membership
+
+`ANSWER`: By the function that $log(\frac{\hat \pi}{1-\hat \pi}) = \beta_0 + \beta_1 x_i$ knowing $\hat \pi$ = 0.75, $x_i$ can be calculated to be 47.21945. Therefore at least $47.22 increase in dollars will cause 75% of the members not to renew their memberships.
+
+\hfill
+\hfill
+
+**2**.KNNL Problem 14.14 on Page 626. **Flu shots**. A local health clinic sent fliers to its clients to encourage everyone, but especially older person at high risk of complications, to get a flu shot in time fro protection against an expected flu epidemic. In a pilot follow-up study, 50 clients were randomly selected and asked whether they actually received a flu shot. In addition, data were collected on their age (X1) and their health awareness. The latter data were combined into a health awareness index (X2), for which higher values indicate greater awareness. A client who received a flu shot was coded Y = 1, and a client who did not receive a flu shot was coded Y = 0. The logistic model (14.41) with three predictors in first-order terms is assumed to be appropriate.
+
+
+| $i$:      |1    |2    |3    |...  |157   |158   |159   |
+| --------- |:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| $X_i1$:    |59   |61   |82   |...  |76   |68   |73   |
+| $X_i2$:    |52   |55   |51   |...  |22   |32   |56   |
+| $X_i3$:    |0   |1   |0   |...  |1   |0   |1   |
+| $Y_i$:    |0    |0    |1    |...  |1    |1    |1    |
+
+Logistic regression model (14.20) is assumed to be appropriate.
+
+
+a> Find MLEs of $\beta_0$, $\beta_1$, $\beta_2$ and $\beta_3$. State the fitted response function
+
+```{r, echo=T,message=FALSE,comment=NA}
+data.14=read.table("CH14PR14.txt",col.names=c('y','x1','x2','x3'))
+logit.14 <- glm(y ~ x1+x2+x3, family = binomial(link = "logit"), data.14)
+cbind(coef(summary(logit.14)),'OR'=exp(coef(logit.14)))
+```
+`ANSWER`: Therefore, the fitted response function is: $$\hat \pi_i = \frac{e^{\beta_0+\beta_1 x_{1i}+\beta_2 x_{2i}+\beta_3 x_{3i}}}{1+e^{\beta_0+\beta_1 x_{1i}+\beta_2 x_{2i}+\beta_3 x_{3i}}}$$
+By plugging in $\beta_0$ = -1.18, $\beta_1$ = 0.07, $\beta_2$ = -0.10, $\beta_3$ = 0.43, we get the response function: $$\hat \pi_i = \frac{e^{0.07 x_{1i} -0.1 x_{2i} +0.43 x_{3i} - 1.18}}{1+e^{0.07 x_{1i} -0.1 x_{2i} +0.43 x_{3i} - 1.18}}$$
+
+\hfill
+
+b> Obtain exp(b1), exp(b2), and exp(b3). Interpret these numbers
+
+`ANSWER`: As what I've obtained above, the exp(b1) = 1.0755025, which means that for every one unit increase in age, the odds ratio of client with flu shot (Y=1) versus without flu shot (Y=0) increase by 1.0755025 times.
+
+`ANSWER`: The exp(b2) = 0.9057549, which means that for every one unit increase in health awareness, the odds ratio of client with flu shot (Y=1) versus without flu shot (Y=0) decrease by 0.9057549 times.
+
+`ANSWER`: The exp(b3) = 1.5433801, which means that for every one unit increase in $x_3$, the odds ratio of client with flu shot (Y=1) versus without flu shot (Y=0) increase by 1.5433801 times.
+
+\hfill
+
+c> Does it make sense in context of this problem to interpret $\beta_0$ or $e^{\beta_0}$? If you think it does. give the interpretation. If you think it doesn’t, explain why not
+
+`ANSWER`: It doesn't make sense to interpret $\beta_0$ or $e^{\beta_0}$ because there isn't people with age of 0 ($X_1$).
+
+\hfill
+
+d> What is the effect of 5 years age difference on the odds of getting a flu shot?
+
+`ANSWER`: The odds ratio of getting a flu shot will increase by $e^{5*\beta_1}$, 1.438988 times. 
+
+\hfill
+
+e> What is the estimated probability that clients aged 55 with a health awareness index of 60 will receive a flu shot?
+
+```{r, echo=T,message=FALSE,comment=NA}
+cat("the estimated probability that clients aged 55 with a health awareness 
+    index of 60 \n (fixed x3 = 1) is", 
+    predict(logit.14, type = "response",newdata = list(x1=55,x2=60,x3=1)))
+cat("the estimated probability that clients aged 55 with a health awareness 
+    index of 60 \n (fixed x3 = 0) is", 
+    predict(logit.14, type = "response",newdata = list(x1=55,x2=60,x3=2)))
+```
+
+f> Is Age significant? Carry out the test. State the hypothesis, state the the p-value and state your conclusions in context.
+
+`ANSWER`: H0: $\beta_1= 0$ vs. Ha: $\beta_1 \neq$  0 
+
+p-value =  0.016581871
+
+Conclusion: we have sufficient evidence to show that age is significant to be included to predict whether a client received flu shot or not.
+
+\hfill
+
+g> Use the likelihood ratio test to determine whether X3 can be dropped from the regression model. Use $\alpha$ = 0.05. State the full and reduce models, decision rules, P-value, and state your conclusions in context.
+
+```{r, echo=T,message=FALSE,comment=NA}
+library(epicalc)
+model0=logit.14
+model1=glm(y ~ x1+x2, family = binomial(link = "logit"), data.14)
+lrtest (model0, model1)
+```
+
+`ANSWER`: Hypothesis:
+H0: reduced model: $\hat \pi_i = \frac{e^{\beta_0+\beta_1 x_{1i}+\beta_2 x_{2i}}}{1+e^{\beta_0+\beta_1 x_{1i}+\beta_2 x_{2i}}}$ 
+Ha: full model: $\hat \pi_i = \frac{e^{\beta_0+\beta_1 x_{1i}+\beta_2 x_{2i}+\beta_3 x_{3i}}}{1+e^{\beta_0+\beta_1 x_{1i}+\beta_2 x_{2i}+\beta_3 x_{3i}}}$
+
+The Likelihood Ratio Statistic:  -2 log L from reduced model -(-2 log L from current model)
+
+Decision rule: If $G^2 \leqslant \chi^2(1-\alpha,p-q)$, conclude $H_0$; otherwise, reject $H_0$.
+
+P-value = 0.4020417
+
+Conclusion: We have insufficient evidence to conclude x3 into our model in predicting client's probability of receiving flu shot. 
+
+
+
+
+
+

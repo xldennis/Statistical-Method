@@ -1,0 +1,230 @@
+---
+title: "homework"
+author: "xiang liu"
+date: "November 19, 2014"
+output:
+  pdf_document:
+    fig_height: 3
+    fig_width: 8
+    latex_engine: lualatex
+    toc: yes
+  html_document:
+    fig_height: 3.5
+    fig_width: 8
+    toc: yes
+geometry: margin=1in
+setspace: onehalfspacing
+fontsize: 22pt
+---
+
+
+1.Prepare separate box plots of the test scores for each of the four newly developed aptitude tests. Are there any noteworthy features in these plots (eg. symmetry of the distribution,possible outliers)?  
+ 
+```{r, echo=FALSE,message=FALSE,comment=NA,fig.width=4, fit.height=4, cache=TRUE}
+setwd("~/Desktop/statistics/UFL data set")
+data=read.table("CH09PR10.txt")
+names(data)=c("Y","x1","x2","x3","x4")
+boxplot(data$x1, main="BoxPlot of Test 1", ylab="Job Proficiency")
+boxplot(data$x2, main="BoxPlot of Test 2", ylab="Job Proficiency")
+boxplot(data$x3, main="BoxPlot of Test 3", ylab="Job Proficiency")
+boxplot(data$x4, main="BoxPlot of Test 4", ylab="Job Proficiency")
+```
+
+- There is a outlier in the test 1.
+- Test 2 seems to be asymmetric
+  
+
+2. Obtain the scatter plot matrix. Also obtain the correlation matrix of the X variables. What do the scatter plots suggest about the nature of the functional relationship between the response variable Y and each of the predictor variable? Are any serious multicollinearity problem evident? 
+ 
+```{r, echo=FALSE,message=FALSE,comment=NA,fig.align='left',fig.width=8, cache=TRUE, fig.height=6}
+# Basic Scatterplot Matrix
+pairs(~Y+x1+x2+x3+x4,data, main="Simple Scatterplot Matrix")
+library(Hmisc)
+print("Correlation Matrix")
+rcorr(as.matrix(cor(data)))$r
+print("Significance Matrix")
+rcorr(as.matrix(cor(data)))$P
+```
+
+- It seems that x3, x4 and Y have strong linear relationship. x1 has moderately strong relationship with Y. < br>
+- However, x3 and x4 seem to have serious multicollinearity problem.
+  
+
+3. Fit the multiple regression function containing all four predictor variables as first-order terms. Does it appear that all predictor variables should be retained?
+ 
+```{r, echo=FALSE,message=FALSE,comment=NA}
+lm.a=lm(Y~., data)
+summary(lm.a)
+```
+
+ $$\hat Y = -124.38 + 0.30 x_1 + 0.05 x_2 + 1.31 x_3 + 0.52 x_4$$
+ 
+- Since only Beta 2 isn't significant and the F statistics of the overall model is significant, I think all predictor variables should be retained in the model.
+
+
+4. Obtain a plot of residuals against predicted vales and normal probability plot for the fitted model obtained in the previous question. Do you see any problems?
+ 
+```{r, echo=FALSE,message=FALSE,comment=NA, fig.height=4}
+res.lm=lm.a$residuals
+fit.lm=lm.a$fitted.values
+plot(fit.lm,res.lm)
+lm.stdres = rstandard(lm.a)
+qqnorm(lm.stdres,
+       ylab="Standardized Residuals",
+       xlab="Normal Scores",
+       main="residuals of the level of a steroid") 
+qqline(lm.stdres)
+```
+
+- The residuals are evenly distributted along x-axis=0 and equal variance among all fitted value. 
+- However it doesn't seem to conform to a normal distribution as shown with the heavily tail trend.   
+ 
+
+5. Using only first-order terms for the predictor variables in the pool of potential X variables, find the four best subset regression models according to the $R^2_{a,p}$ criterion.
+ 
+```{r, echo=FALSE,message=FALSE,comment=NA}
+library(leaps)
+
+best <- function(model, ...) 
+{
+  subsets <- regsubsets(formula(model), model.frame(model), ...)
+  subsets <- with(summary(subsets),
+                  cbind(p = as.numeric(rownames(which)), which, adjr2))
+
+  return(subsets)
+}  
+
+round(best(lm.a, nbest = 6), 4)
+```
+
+- Since $R^2_{a,p}$ won't decrease as number of parameter increases, I take a look at the absolute value of printed adjusted R square. 
+- the four best subset regression models are
+
+  subset      | $R^2_{a,p}$     
+ -------------|--------
+  x1, x3, x4  | 0.956   
+  x1,x2,x3,x4 | 0.955   
+  x1,x3       | 0.927   
+  x1,x2,x3    | 0.925  
+
+
+6. Since there is relatively little difference in $R^2_{a,p}$ for the four best subset models, what other criteria would you use to help in the selection of the best model?
+
+- There are $C_p$ Criterion, $AIC_p$ and $SBC_p$ that I can use to help select the best model. They all place penalties for adding predictors. 
+
+
+7. Using forward stepwise regression, find the best subset of predictor variables to predict job proficiency. Use α = 0.05 and 0.10 for adding or deleting a variable, respectively.
+ 
+```{r, echo=FALSE,message=FALSE,comment=NA}
+library(MASS)
+Null = lm(Y ~ 1, data)
+addterm(Null, scope = lm.a, test="F")
+NewMod = update( Null, .~. + x3)
+addterm( NewMod, scope = lm.a, test="F" )
+NewMod = update( NewMod, .~. + x1)
+dropterm(NewMod , test = "F")
+addterm( NewMod, scope = lm.a, test="F" )
+NewMod = update( NewMod, .~. + x4)
+dropterm( NewMod, test = "F" )
+addterm( NewMod, scope = lm.a, test="F" )
+```
+
+- As shown, start with no predictors and x3 is chosen because of smallest p-value (1.264e-09 < 0.05). 
+- Then regressing y on x3 and additional one predictor, the result shows that x1 has the smallest p-value (1.578e-06< 0.05). Therefore x1 can be included in the model. In the same time a test is given to see if x3 should be dtropped. Since p-value (6.313e-13>0.10), x3 is retained.
+- Then regressing y on x3, x1 and any one of the rest two, it shows that x4 has the smallest p-value (0.0007354 < 0.05) and hence being included in the model.In the same time a test is given to see if x3 or x1 should be dtropped. Since both of their p-value > 0.10, they are both retained.
+- Finally, regressing y on all four predictors and x2 isn't significant to be included (0.4038 < 0.05). Thus it is deleted from the model. 
+- The best subset of predictor variables to predict job proficiency is
+(x1,x3,x4)
+ 
+
+8. How does the best subset according to forward stepwise regression compare with the best subset according to the $R^2_{a,p}$ criterion obtained earlier?
+
+- The model evaluated using the forward stepwise regression shows the same result as I earlier chose under the criteria of adjusted R square (top on the list). 
+
+
+9. Based on the results using the $R^2_{a,p}$ criterion and forward stepwise regression, we want to evaluate the subset model containing only first-order terms in X1, X2, X3, and X4 in detail.
+
+The selected model is  $\hat Y = -124.2 + 0.296 x_1 + 1.357 x_3 + 0.517 x_4$ 
+
+```{r, echo=FALSE,message=FALSE,comment=NA,fig.width=4, cache=TRUE}
+(lm.b=lm(Y~x3+x1+x4,data))
+res.lm=lm.b$residuals
+fit.lm=lm.b$fitted.values
+x1x3=scale(data$x1,T,F)*scale(data$x3,T,F)
+x3x4=scale(data$x3,T,F)*scale(data$x4,T,F)
+x1x4=scale(data$x1,T,F)*scale(data$x4,T,F)
+plot(fit.lm,res.lm);plot(data$x1,res.lm);plot(data$x3,res.lm);plot(data$x4,res.lm);plot(x1x3,res.lm);plot(x1x4,res.lm);plot(x3x4,res.lm)
+```
+
+- Nowhere indicting a strong curvilinear effect and interaction. I don't need to conduct any modifications of the model.
+ 
+
+10. Prepare separate added-variable plots of e(Y|X3) vs e(X4|X3), e(Y |X1) vs e(X3|X1), e(Y|X3) vs e(X1|X3). Do these plots suggest that any modifications in the model form are warranted?
+ 
+```{r, echo=FALSE,message=FALSE,comment=NA, cache=TRUE}
+eyx3=lm(Y~x3,data)$residuals
+ex4x3=lm(x4~x3,data)$residuals
+eyx1=lm(Y~x1,data)$residuals
+ex3x1=lm(x3~x1,data)$residuals
+eyx3=lm(Y~x3,data)$residuals
+ex1x3=lm(x1~x3,data)$residuals
+plot(eyx3,ex4x3)
+plot(eyx1,ex3x1)
+plot(eyx3,ex1x3)
+```
+
+- The marginal contribution of each predictor seems linear and no need for modification.x1 and y when x3 is in the model seems to be slightly associative. 
+
+ 
+11. Obtain the studentized deleted residuals and identify any outlying Y observations. Use the Bonferroni outlier test procedure with α = 0.05. State the decision rule and conclusion.
+ 
+```{r, echo=FALSE,message=FALSE,comment=NA, cache=TRUE}
+(rsd.lm=round(rstudent(lm.b), 3))
+n=25
+p=4
+ifelse(rsd.lm > qt(1-0.95/2/n,n-p-1), "outlier", "Non-outlier") 
+```
+
+- It appears to be that all observed values cannot be definited as outliers by Bonferroni outlier test.
+
+ 
+12. Obtain the diagonal elements of the hat matrix. Using the rule of thumb in the textbook, identify any outlying X observations 
+ 
+```{r, echo=FALSE,message=FALSE,comment=NA, cache=TRUE}
+(h.lm=round(hatvalues(lm.b), 3))
+n=25
+p=4
+ifelse(h.lm > 2*p/n, "outlier", "Non-outlier") 
+```
+
+As suggested by the textbook, the diagonal elements of the hat matrix of case 2 and 7 exceed twice the mean leverage value. They are considered as outliers by the rule of thumb in the textbook. 
+
+ 
+13. Using DFFITS, DEBETAS and Cooks distance to assess the influence the outlying observations you identified in previous two questions. What do you conclude?
+ 
+```{r, echo=FALSE,message=FALSE,comment=NA, cache=TRUE}
+a= cbind(
+  "DFFITS"  = round(dffits(lm.b), 4),
+  "DFBETA0" = round(dfbetas( lm.b)[,1], 4),
+  "DFBETA3" = round(dfbetas( lm.b)[,2], 4),
+  "DFBETA1" = round(dfbetas( lm.b)[,3], 4),
+  "DFBETA4" = round(dfbetas( lm.b)[,3], 4),
+  "Cook's D" = round(cooks.distance( lm.b), 4))
+a[c(2,7),]
+```
+
+- Case 2 with Cook’s distance value=0.0007 is the 0.013 percentile of the F-distribution and case 7 with Cook’s distance value=0.00053 is the 0.006 percentile of the F-distribution.
+- Then absolute values of DFFITS values for case 2 and case 7 are 0.0541 and 0.0449, both exceed the cut-off value 0.8. 
+- DFBETAS values for case 2 and 7 are all much less than 1, suggesting non-influential. 
+- Based on all three criteria, we conclude that all the outlying X observations are not influential.
+
+
+14. Obtain the variance inflation factors. What do they indicate?
+
+```{r, echo=FALSE,message=FALSE,comment=NA, cache=TRUE}
+library(car)
+round(vif(lm.b), 4)
+```
+
+- Since all three VIF don’t exceed 10, which indicates no serious multicollinearity problems exist.
+

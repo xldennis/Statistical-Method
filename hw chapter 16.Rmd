@@ -1,0 +1,259 @@
+---
+title: "homework chapter 16 and 17"
+author: "xiang liu"
+date: "February 17, 2015"
+output:
+  html_document:
+    fig_height: 4
+    fig_width: 8
+    toc: yes
+  pdf_document:
+    fig_height: 4.3
+    fig_width: 8
+    keep_tex: yes
+    toc: yes
+geometry: margin=1in
+setspace: onehalfspacing
+fontsize: 22pt
+---
+
+**homework 4.1**.KNNL Problem 15.9 on Page 674. A research laboratory was developing a new compound for the relief of severe cases of hay fever. The amounts of the two active ingredients in compound were varied at three levels (low, medium, high) each using 18 volunteers. Randomization was used in assigning volunteers to each of the treatment combinations. Data were collected on hours of relief.
+
+\hfill 
+
+a> Is this study experimental, observational, or mixed? Why?
+
+`ANSWER`: Experimental study since all three levels of treatment are controlled and randomly distributted among 18 volunteers. 
+
+\hfill 
+
+b> Identify all factors, factor levels, and factor-level combinations. 
+
+`ANSWER`: Factor 1: ingredient 1, with three levels (low, medium, high) 
+; Factor 2: ingredient 2, with three levels (low, medium, high) 
+; There're 3 * 3 = 9 combinations.
+
+\hfill
+
+c> Describe how randomization would be performed in this study.
+
+`ANSWER`: Randomization was used in assigning volunteers to each of the treatment combinations
+
+\hfill
+
+d> What type of study design is being implemented here? 
+
+`ANSWER`: Completely randomized design
+
+\hfill
+
+e> What is the basic unite of study?
+
+`ANSWER`: Volunteer
+
+\hfill
+\hfill
+
+**homework 4.2**.KNNL Problem 16.2 on page 722. A marketing researcher, having collected data on breakfast cereal expenditures by families with 1, 2, 3, 4 and 5 children living at home, plans to use an ordinary regression model to estimate the mean expenditures at each of these five family size levels. However, the researcher is undecided between fitting a linear or a quadratic model, and the data not do give clear evidence in favor of one model or the other. A colleague suggests: “For your purposes you might simply use an ANOVA model.” Is this a useful suggestion? Explain.
+
+`ANSWER`: It's useful what the researcher cares about is how different the cereal expenditures among 5 family size levels. ANOVA can be used even if there is a quadratic nonliear relationship between expenditure and family size as long as the assumption of ANOVA model is met (namely, the same assumption simple linear regression requires)
+
+\hfill
+\hfill
+
+**homework 5.1**.KNNL Problem 16.4 on page 722. A company studying the relation between job satisfaction and length of service of employees, classified employees into three length of service groups (less than 5 years, 5-10 years, more than 10 years). Suppose $\mu_1$ = 65, $\mu_2$ = 80, $\mu_3$ = 95, and $\sigma$ = 3, and that ANOVA model $Y_{ij} = \mu_i + \epsilon_{ij}$ is applicable.
+
+\hfill
+
+a> Draw a representation of this model in the format of Figure 16.2.
+
+```{r, echo=T,message=FALSE,comment=NA,fig.height=3.5}
+s <- seq(55,105,by=0.1)
+plot(s, dnorm(s,65, 3), type="l", yaxt='n', xaxt='n', axes=F, ann=FALSE)
+lines(s, dnorm(s,80, 3), col="green")
+lines(s, dnorm(s,95, 3), col="blue")
+mtext(text=c(expression(mu[1]==65),expression(mu[2]==80),
+             expression(mu[3]==95)),side=1,at=c(65,80,95))
+mtext(text=c('less than 5 years', '5 - 10 years', 'more than 10 years'),
+      side=3,at=c(65,80,95))
+```
+
+\hfill
+
+b> Find E(MSTR) and E(MSE) if 25 employees from each group are selected at random for intensive interviewing about job satisfaction.
+
+`ANSWER`: First to calculate the overall mean, $\mu = \frac{65*25}{75}+\frac{80*25}{75}+\frac{95*25}{75}$ = 80
+
+Next to calculate E(MSTR) = $\sigma^2 + \frac{1}{r-1}\sum {n_i (\mu_i - \mu)^2}$ = 5634
+
+And E(MSE) = $\sigma^2$ = 9
+
+\hfill
+
+c> Is E(MSTR) substantially large than E(MSE) here?
+
+`ANSWER`: Yes, it is substantially large than E(MSE) in this case.
+
+\hfill
+
+d> What is the implication of the results in part (c)?
+
+`ANSWER`: If we sampled 25 employees from each group, then we are probably going to get a significant F statistics to indicate differences of job satisfactions among three types of length of service of employees. 
+
+\hfill
+\hfill
+
+**homework 5.2**. This problem is used to demonstrate the relationship between regression with dummy variables and ANOVA. Two ways of creating dummy variables are considered. If you are using SAS, you can run the following code. If you are using a different software,you can extract the data set and parameterizations from the code below.
+
+\hfill
+
+a> Compare the ANOVA table and parameter results from the GLM analysis and Parameterization #1. Are they the same or different? What do the coefficients associated with $X_1$ and $X_2$ estimate in terms of treatment means?
+
+`ANSWER`: The ANOVA tables from the GLM and the #1 dummy variable analysis are the same. 
+
+As for the parameter result, the Parameterization #1 sets the original parameters as
+$$\mu_1 = \beta_0 + \beta_1 = \mu + \tau_1 \newline$$
+$$\mu_2 = \beta_0 + \beta_2 = \mu + \tau_2$$
+$$\mu_3 = \beta_0 = \mu + \tau_3$$
+Therefore, the estimated parameters of dummy variables are 
+$$\beta_0 = \mu = \mu_3$$
+$$\beta_1 = \tau_1 = \mu_1 - \mu_3$$
+$$\beta_2 = \tau_2 = \mu_2 - \mu_3$$
+Thus, the $\mu$, $\tau_1$ and $\tau_2$ in the GLM analysis will be the same as the $\beta_0$, $\beta_1$ and $\beta_2$ in regression analysis. The $\tau_3$ which, as the referrence group, is always 0 in GLM. 
+
+And $\beta_1$ associated with $X_1$ is $\mu_1 - \mu_3$, $\beta_2$ associated with $X_2$ is $\mu_2 - \mu_3$
+
+\hfill
+
+b> Compare the ANOVA table and parameter results from the GLM analysis and Parameterization #2. Are they the same or different? What do the coefficients associated with $X_1$ and $X_2$ estimate in terms of treatment means?
+
+`ANSWER`: The ANOVA tables from the GLM and the #2 dummy variable analysis are the same. 
+
+As for the parameter result, the Parameterization #2 sets the original parameters as
+$$\mu_1 = \beta_0 + \beta_1 = \mu + \tau_1$$
+$$\mu_2 = \beta_0 + \beta_2 = \mu + \tau_2$$ 
+$$\mu_3 = \beta_0 - \beta_1 - \beta_2 = \mu + \tau_3$$
+Therefore, the estimated parameters of dummy variables are (regression)
+$$\beta_0 = \mu = \frac{\mu_1+\mu_2+\mu_3}{3}$$
+$$\beta_1 = \tau_1 = \mu_1 - \mu = \frac{2\mu_1-\mu_2-\mu_3}{3}$$
+$$\beta_2 = \tau_2 = \mu_2 - \mu_3 = \frac{2\mu_2-\mu_1-\mu_3}{3}$$
+Since GLM model assumes that $\tau_3$ as a referrence group, is 0 while regression analysis model assumes that $\sum_{i=1}^{3} \mu_i$ = 0, there would be difference between $\beta_0$, $\beta_1$, $\beta_2$ in regression analysis and $\mu$, $\tau_1$, $\tau_2$ in GLM. 
+
+And $\beta_1$ associated with $X_1$ is $\frac{2\mu_1-\mu_2-\mu_3}{3}$, $\beta_2$ associated with $X_2$ is $\frac{2\mu_2-\mu_1-\mu_3}{3}$
+
+\hfill
+
+c> Show that $b_0 + b_1$ and $b_1 - b_2$ gives the same answer regardless of the parameterization. What do these two terms estimate in terms of the treatment means?
+
+`ANSWER`: in Parameter #1, $b_0$ + $b_1$ = $\mu_3$ + ($\mu_1$ - $\mu_3$) = $\mu_1$; AND $b_1$ - $b_2$ = ($\mu_1$ - $\mu_3$) - ($\mu_2$ - $\mu_3$) = $\mu_1$ - $\mu_2$
+
+in parameter #2, $b_0$ + $b_1$ = $\frac{\mu_1+\mu_2+\mu_3}{3}$ + $\frac{2 \mu_1-\mu_2-\mu_3}{3}$ = $\mu_1$; AND $b_1$ - $b_2$ = ($\frac{2 \mu_1-\mu_2-\mu_3}{3}$ - $\frac{2 \mu_2-\mu_1-\mu_3}{3}$) = $\mu_1$ - $\mu_2$
+
+Therefore, they are the same regardless of what parameterizaiton used.
+
+\hfill
+\hfill
+
+**homework 5.3**. **Filling machines**. A company uses six filling machines of the same make and model to place detergent into cartons that show a label weight of 32 ounces. The production manager has complained that the six machines do not place the same amount of fill into the cartons. A consultant requested that 20 filled cartons be randomly selected from each of the 6 machines and the content of each carton be carefully weighed. The deviations from 32 ounces were recorded. Sample data are stored in the data file “CH16PR11.txt” with variable names $y$, $i$, and $j$, respectively.
+
+Assume that ANOVA model $Y_{ij} = \mu_i + \epsilon_{ij}$ is applicable
+
+\hfill
+
+a> Is the factor in this problem experimental or observational? Why?
+
+`ANSWER`: The factor, type of filling machines, in this problem is observational since we cannot make a cause-effect manipulation on this factor. 
+
+\hfill
+
+b> Give a table of sample sizes, means, and standard deviations for the six different filling machines.
+
+```{r, echo=T,message=FALSE,comment=NA, fig.align='center'}
+data.53=read.table("CH16PR11.txt",col.names=c('y','i','j'))
+data.53$i=factor(data.53$i)
+library(pander)
+library(doBy)
+ft=summaryBy(y~i, data.53, FUN=c(length, mean, sd))
+attributes(ft)$names <- c("levels","sample size",'mean','standard deviation')
+pandoc.table(ft)
+```
+
+c> Make a plot of the means and a plot of the individual observations versus filling machine number. Comment on what these plots suggest to you as far as differences in the distribution of fill across the six filling machines?
+
+```{r, echo=T,message=FALSE,comment=NA,fig.height=3.5}
+library(ggplot2)
+level=data.53$i
+value=data.53$y
+ggplot(data.53, aes(x=level, y=value)) + geom_point() +
+  stat_summary(aes(y = value,group=1), fun.y=mean, colour="red", geom="line",group=1)
+```
+
+`ANSWER`: They have similar distribution within each filling machines. And there is variations in terms of mean value between different machine fillings. 
+
+\hfill
+
+d> Obtain the fitted values.
+
+`ANSWER`: It's estimated by the mean value at each category, $\hat Y_{1 j}$ = $\bar Y_1$ = 0.0735, $\hat Y_{2 j}$ = $\bar Y_2$ = 0.1905, $\hat Y_{3 j}$ = $\bar Y_3$ = 0.4600, $\hat Y_{4 j}$ = $\bar Y_4$ = 0.3655, $\hat Y_{5 j}$ = $\bar Y_5$ = 0.1250, $\hat Y_{6 j}$ = $\bar Y_6$ = 0.1515.   
+
+\hfill
+
+e> Obtain the analysis of variance table.
+
+```{r,echo=T,comment=NA, warning=FALSE}
+library(knitr)
+library(pander)
+panderOptions('round', 3)
+panderOptions('keep.trailing.zeros', TRUE)
+names(data.53)[2]='level'
+model1 = lm(y~level, data.53)
+anova.m1 = anova(model1)
+pander(anova.m1)
+pander(coef(summary(model1)))
+```
+
+\hfill
+
+f> Statistically examine the question of whether or not the six machines give the same average amount of detergent. State the null and alternative hypothesis in terms of your model parameters (cell-based or factor-effects), give the test statistic with degrees of freedom, the P-value and your conclusion.
+
+H0: all the $\mu_i$ are equal vs Ha: not all the $\mu_i$ are equal 
+
+Factor-effects parameters: F (5, 114) = 14.78, Pr(>F) < 0.05, rejecting the null hypothesis.
+
+Conclusion: There is significant differences in terms of the amount of detergent these six machines give. 
+
+\hfill
+
+g> Examine the residuals of this analysis to make sure the model assumptions are not violated. Display (and comment on) the plots and/or tests you use to do this. 
+
+`ANSWER`: the residuals are roughly normal distributed and sum to 0 in each category.
+
+```{r, echo=T,message=FALSE,comment=NA, results='hide'}
+df <- transform(data.53, u = unlist(tapply(y, level, scale, scale = FALSE)))
+round(addmargins(xtabs(u ~ level + j, df, sparse = TRUE), 2),2)  # Their sums are as 0 as it gets in R.
+```
+
+`Residual vs. Fit`
+
+```{r, echo=T,message=FALSE,comment=NA}
+lm.a=lm(y~level, data.53)
+plot(residuals(lm.a)~fitted(lm.a),xlab="fitted values",
+     ylab="residuals")
+abline(h=0,lty=3,col="red") # horizontal reference line
+```
+
+`Residual vs. Machine Type`
+
+```{r, echo=T,message=FALSE,comment=NA}
+stripchart(residuals(lm.a)~data.53$level,method="stack",
+           vertical=TRUE,jitter=0,xlab="machine type",
+           ylab="residuals",pch=1,cex=1.5)
+```
+
+`Residual Q-Q Plot`
+
+```{r, echo=T,message=FALSE,comment=NA}
+qqnorm(resid(lm.a),ylab="Sample Quantiles",main="Residual Q-Q Plot")
+qqline(resid(lm.a),lty=3,col="red")
+```
+
